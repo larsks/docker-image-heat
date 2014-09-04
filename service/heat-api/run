@@ -1,0 +1,4 @@
+#!/bin/sh
+
+exec runuser -u heat -g heat -- /usr/bin/heat-api 2>&1
+

@@ -1,0 +1,33 @@
+#!/bin/sh
+
+: ${HEAT_DB_USER:=heat}
+: ${HEAT_DB_PASS:=secret}
+: ${HEAT_DB_NAME:=heat}
+: ${HEAT_DB_HOST:=mysql}
+: ${HEAT_KEYSTONE_PASS:=secret}
+
+exec > /srv/heat/sysinit.log 2>&1
+
+# make sure permissions are correct.
+chown -R heat:heat /srv/heat
+
+# configure database credentials
+if [ "$HEAT_DB_URI" ]; then
+	crudini --set /etc/heat/heat.conf \
+		database \
+		connection \
+		"$HEAT_DB_URI"
+else
+	crudini --set /etc/heat/heat.conf \
+		database \
+		connection \
+		mysql://${HEAT_DB_USER}:${HEAT_DB_PASS}@${HEAT_DB_HOST}/${HEAT_DB_NAME}
+fi
+
+crudini --set /etc/heat/heat.conf \
+	keystone_authtoken \
+	admin_password \
+	"$HEAT_KEYSTONE_PASS"
+
+runuser -u heat -g heat -- heat-manage db_sync
+
